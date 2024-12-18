@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     // Construimos las imágenes usando Docker Compose
-                    sh 'docker-compose -f docker-compose.yml build'
+                    sh 'docker compose -f docker-compose.yml build'
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
                     """
                     
                     // Etiquetamos y subimos las imágenes a Docker Hub
-                    sh 'docker-compose -f docker-compose.yml push'
+                    sh 'docker compose -f docker-compose.yml push'
                 }
             }
         }
