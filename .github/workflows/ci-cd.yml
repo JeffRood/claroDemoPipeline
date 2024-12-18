@@ -1,0 +1,36 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Node.js Docker Image
+        run: docker build -t nodejs-service:latest ./nodejs-service
+
+      - name: Build Python Docker Image
+        run: docker build -t python-service:latest ./python-service
+
+      - name: Scan Node.js Image with Docker Scout
+        run: docker scout cves nodejs-service:latest
+
+      - name: Scan Python Image with Docker Scout
+        run: docker scout cves python-service:latest
+
+      - name: Push Images to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker tag nodejs-service:latest ${{ secrets.DOCKER_USERNAME }}/nodejs-service:latest
+          docker tag python-service:latest ${{ secrets.DOCKER_USERNAME }}/python-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/nodejs-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/python-service:latest

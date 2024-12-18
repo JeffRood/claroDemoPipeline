@@ -1,0 +1,39 @@
+# Node.js Service
+/nodejs-service/node_modules/
+/nodejs-service/package-lock.json
+/nodejs-service/npm-debug.log
+# /nodejs-service/.env
+
+# Python Service
+/python-service/__pycache__/
+/python-service/venv/
+# /python-service/.env
+/python-service/requirements.lock
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+*.swp
+
+
+# Archivos de logs
+*.log
+nodejs-service/*.log
+python-service/*.log
+
+# Archivos generados por test o coverage
+*.coverage
+nodejs-service/coverage/
+python-service/.coverage/
+
+# GitHub Actions Workflow
+# /.github/workflows/ci.yml
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos de entornos locales
+# /nodejs-service/.env
+# /python-service/.env
