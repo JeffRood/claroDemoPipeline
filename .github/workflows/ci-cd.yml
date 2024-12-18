@@ -2,6 +2,7 @@ stages:
   - build
   - scan
   - test
+  - approve_scan
   - deploy
 
 build-nodejs:
@@ -36,11 +37,20 @@ scan-docker-images:
   only:
     - main
 
+approve-scan:
+  stage: approve_scan
+  script:
+    - echo "Waiting for manual approval to proceed with deployment"
+  when: manual
+  allow_failure: false  
+  only:
+    - main
+
 test-nodejs:
   stage: test
   script:
     - echo "Running tests for Node.js Service..."
-    - docker run --rm nodejs-service npm test  
+    - docker run --rm nodejs-service npm test
   tags:
     - docker
   only:
@@ -50,12 +60,11 @@ test-python:
   stage: test
   script:
     - echo "Running tests for Python Service..."
-    - docker run --rm python-service pytest  
+    - docker run --rm python-service pytest
   tags:
     - docker
   only:
-      - main
-
+    - main
 
 deploy:
   stage: deploy
@@ -66,8 +75,9 @@ deploy:
     - echo "Deploying Python Service..."
     - docker tag python-service your-docker-registry/python-service:latest
     - docker push your-docker-registry/python-service:latest
+  when: manual  
+  allow_failure: false  
   tags:
     - docker
   only:
     - main
-
