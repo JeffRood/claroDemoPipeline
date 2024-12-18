@@ -1,36 +1,73 @@
-name: CI/CD Pipeline
+stages:
+  - build
+  - scan
+  - test
+  - deploy
 
-on:
-  push:
-    branches:
+build-nodejs:
+  stage: build
+  script:
+    - echo "Building Node.js Service Docker Image..."
+    - docker build -t nodejs-service ./nodejs-service
+  tags:
+    - docker
+  only:
+    - main
+
+build-python:
+  stage: build
+  script:
+    - echo "Building Python Service Docker Image..."
+    - docker build -t python-service ./python-service
+  tags:
+    - docker
+  only:
+    - main
+
+scan-docker-images:
+  stage: scan
+  script:
+    - echo "Scanning Docker images using Docker Scout..."
+    - docker pull docker/scout-cli
+    - docker scan nodejs-service
+    - docker scan python-service
+  tags:
+    - docker
+  only:
+    - main
+
+test-nodejs:
+  stage: test
+  script:
+    - echo "Running tests for Node.js Service..."
+    - docker run --rm nodejs-service npm test  
+  tags:
+    - docker
+  only:
+    - main
+
+test-python:
+  stage: test
+  script:
+    - echo "Running tests for Python Service..."
+    - docker run --rm python-service pytest  
+  tags:
+    - docker
+  only:
       - main
 
-jobs:
-  build-and-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying Node.js Service..."
+    - docker tag nodejs-service your-docker-registry/nodejs-service:latest
+    - docker push your-docker-registry/nodejs-service:latest
+    - echo "Deploying Python Service..."
+    - docker tag python-service your-docker-registry/python-service:latest
+    - docker push your-docker-registry/python-service:latest
+  tags:
+    - docker
+  only:
+    - main
 
-      - name: Build Node.js Docker Image
-        run: docker build -t nodejs-service:latest ./nodejs-service
-
-      - name: Build Python Docker Image
-        run: docker build -t python-service:latest ./python-service
-
-      - name: Scan Node.js Image with Docker Scout
-        run: docker scout cves nodejs-service:latest
-
-      - name: Scan Python Image with Docker Scout
-        run: docker scout cves python-service:latest
-
-      - name: Push Images to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker tag nodejs-service:latest ${{ secrets.DOCKER_USERNAME }}/nodejs-service:latest
-          docker tag python-service:latest ${{ secrets.DOCKER_USERNAME }}/python-service:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/nodejs-service:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/python-service:latest
