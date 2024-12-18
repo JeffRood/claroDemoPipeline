@@ -10,7 +10,17 @@ RUN apt-get update && apt-get install -y \
     curl \
     python3 python3-pip \
     nodejs npm \
+    apt-transport-https ca-certificates curl software-properties-common \
     && apt-get clean
+
+# Instala Docker
+RUN curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && rm get-docker.sh
+
+# Configura Docker para usar el socket del host
+RUN groupadd docker \
+    && usermod -aG docker jenkins
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -26,6 +36,5 @@ RUN apt-get install -y supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 5001
-
 
 CMD ["/usr/bin/supervisord"]
