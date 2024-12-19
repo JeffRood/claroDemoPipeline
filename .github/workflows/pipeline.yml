@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for Node.js and Python with Heroku
+name: CI/CD Pipeline for Node.js and Python with Docker Compose and Docker Scout
 
 on:
   push:
@@ -14,22 +14,18 @@ jobs:
 
     steps:
     
-      # Clonar el repositorio
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Configurar Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Autenticación en Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Construcción y subida de imágenes a Docker Hub
       - name: Build and push Docker images
         uses: docker/build-push-action@v4
         with:
@@ -38,60 +34,71 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/node-app:latest
             ${{ secrets.DOCKER_USERNAME }}/python-app:latest
 
-      # Instalación de Heroku CLI
+      - name: Install Docker Scout
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
+          export PATH=$HOME/.docker-scout:$PATH
+
+      - name: Analyze Node.js Image with Docker Scout
+        run: |
+          docker scout cves ${{ secrets.DOCKER_USERNAME }}/node-app:latest
+      # || exit 1 
+
+      - name: Analyze Python Image with Docker Scout
+        run: |
+          docker scout cves ${{ secrets.DOCKER_USERNAME }}/python-app:latest
+      # || exit 1
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
-
-      # Validación de claves de Heroku
-      - name: Validate Heroku credentials
+  
+      # - name: Heroku login
+      #   run: |
+      #     echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+      
+      - name: Authenticate with Heroku
         run: |
-          if [ -z "${{ secrets.HEROKU_API_KEY }}" ]; then
-            echo "HEROKU_API_KEY is not set"; exit 1;
-          fi
-          if [ -z "${{ secrets.HEROKU_NODE_APP_NAME }}" ]; then
-            echo "HEROKU_NODE_APP_NAME is not set"; exit 1;
-          fi
-          if [ -z "${{ secrets.HEROKU_PYTHON_APP_NAME }}" ]; then
-            echo "HEROKU_PYTHON_APP_NAME is not set"; exit 1;
-          fi
-
-      # # Autenticación en Heroku Registry
-      # - name: Login to Heroku Container Registry
+          echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+        
+      # - name: Validate Heroku app names
       #   run: |
-      #     echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
-
-      # # Construcción de la imagen Docker para Node.js
-      # - name: Build Docker image for Node.js
+      #     if [ -z "${{ secrets.HEROKU_NODE_APP_NAME }}" ]; then
+      #       echo "HEROKU_NODE_APP_NAME is not set"; exit 1;
+      #     fi
+      #     if [ -z "${{ secrets.HEROKU_PYTHON_APP_NAME }}" ]; then
+      #       echo "HEROKU_PYTHON_APP_NAME is not set"; exit 1;
+      #     fi
+          
+      # - name: Build Docker images for Heroku (Node.js)
       #   run: |
-      #     docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web ./nodejs-service
-
-      # # Construcción de la imagen Docker para Python
-      # - name: Build Docker image for Python
+      #     docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web -f Dockerfile.node .
+      
+      # - name: Build Docker images for Heroku (Python)
       #   run: |
-      #     docker build -t registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web -f ./python-service
+      #     docker build -t registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web -f Dockerfile.python .
 
-      # # Subida de la imagen Node.js a Heroku
-      # - name: Push Node.js Docker image to Heroku
+      # - name: Push Docker images to Heroku (Node.js)
       #   run: |
       #     docker push registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web
 
-      # # Subida de la imagen Python a Heroku
-      # - name: Push Python Docker image to Heroku
+      # - name: Push Docker images to Heroku (Python)
       #   run: |
       #     docker push registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web
 
-      # # Despliegue de la aplicación Node.js en Heroku
-      # - name: Release Node.js container on Heroku
+      # - name: Release Node.js Docker container on Heroku
       #   run: |
       #     heroku container:release web --app ${{ secrets.HEROKU_NODE_APP_NAME }}
 
-      # # Despliegue de la aplicación Python en Heroku
-      # - name: Release Python container on Heroku
+      # - name: Release Python Docker container on Heroku
       #   run: |
       #     heroku container:release web --app ${{ secrets.HEROKU_PYTHON_APP_NAME }}
-
-
+  
+          
   # deploy-with-terraform:
   #   runs-on: ubuntu-latest
   #   needs: build-and-deploy
