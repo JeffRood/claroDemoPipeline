@@ -65,7 +65,15 @@ jobs:
         run: |
           echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
         
-
+      - name: Validate Heroku app names
+        run: |
+          if [ -z "${{ secrets.HEROKU_NODE_APP_NAME }}" ]; then
+            echo "HEROKU_NODE_APP_NAME is not set"; exit 1;
+          fi
+          if [ -z "${{ secrets.HEROKU_PYTHON_APP_NAME }}" ]; then
+            echo "HEROKU_PYTHON_APP_NAME is not set"; exit 1;
+          fi
+          
       - name: Build Docker images for Heroku (Node.js)
         run: |
           docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web -f Dockerfile.node .
