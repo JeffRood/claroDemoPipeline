@@ -57,9 +57,14 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
   
-      - name: Heroku login
+      # - name: Heroku login
+      #   run: |
+      #     echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+      
+      - name: Authenticate with Heroku
         run: |
-          echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+          echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+        
 
       - name: Build Docker images for Heroku (Node.js)
         run: |
