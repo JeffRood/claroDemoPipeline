@@ -53,32 +53,34 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
 
-      - name: Login to Heroku
-        uses: akshnz/heroku-docker-action@v1
-        with:
-           heroku_email: ${{ secrets.HEROKU_EMAIL }}
-           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
   
+      - name: Heroku login
+        run: |
+          echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+
       - name: Build Docker images for Heroku (Node.js)
         run: |
           docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web -f Dockerfile.node .
-        
+      
       - name: Build Docker images for Heroku (Python)
         run: |
           docker build -t registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web -f Dockerfile.python .
-  
+
       - name: Push Docker images to Heroku (Node.js)
         run: |
           docker push registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web
-  
+
       - name: Push Docker images to Heroku (Python)
         run: |
           docker push registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web
-  
+
       - name: Release Node.js Docker container on Heroku
         run: |
           heroku container:release web --app ${{ secrets.HEROKU_NODE_APP_NAME }}
-      
+
       - name: Release Python Docker container on Heroku
         run: |
           heroku container:release web --app ${{ secrets.HEROKU_PYTHON_APP_NAME }}
