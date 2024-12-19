@@ -53,11 +53,11 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
 
-          - name: Login to Heroku
-          uses: akshnz/heroku-docker-action@v1
-          with:
-            heroku_email: ${{ secrets.HEROKU_EMAIL }}
-            heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+      - name: Login to Heroku
+        uses: akshnz/heroku-docker-action@v1
+        with:
+           heroku_email: ${{ secrets.HEROKU_EMAIL }}
+           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
   
       - name: Build Docker images for Heroku (Node.js)
         run: |
