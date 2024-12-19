@@ -64,12 +64,12 @@ jobs:
       # Construcción de la imagen Docker para Node.js
       - name: Build Docker image for Node.js
         run: |
-          docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web -f nodejs-service/Dockerfile .
+          docker build -t registry.heroku.com/${{ secrets.HEROKU_NODE_APP_NAME }}/web ./nodejs-service
 
       # Construcción de la imagen Docker para Python
       - name: Build Docker image for Python
         run: |
-          docker build -t registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web -f python-service/Dockerfile .
+          docker build -t registry.heroku.com/${{ secrets.HEROKU_PYTHON_APP_NAME }}/web -f ./python-service
 
       # Subida de la imagen Node.js a Heroku
       - name: Push Node.js Docker image to Heroku
